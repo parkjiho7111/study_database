@@ -18,9 +18,9 @@
 -- 데이터 3개를 생성하는 INSERT문 작성
 
 CREATE TABLE web_links (
-    link_text VARCHAR(100),
-    link_url VARCHAR(255),
-    category VARCHAR(50)
+    link_text VARCHAR(500),
+    link_url VARCHAR(500),
+    category VARCHAR(500)
 );
 
 INSERT INTO web_links (link_text, link_url, category) VALUES 
