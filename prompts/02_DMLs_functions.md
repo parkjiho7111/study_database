@@ -9,9 +9,10 @@
 
 - 각 문제마다 if '__name__' == '__main__' 이 코드 실행으로 확인하기
 
--study_databases/prompt/02_DMLs_functions.py 저장하기. 
+-study_databases/prompt/02_DMLs_functions.py 만들고 저장하기. 
 
--import psycopg2
+-나의 db정보
+import psycopg2
 import os
 def create_books_table():
     """PostgreSQL 데이터베이스에 연결합니다."""
@@ -20,11 +21,5 @@ def create_books_table():
     db_name = "main_db"
     db_user = "admin"
     db_password = "admin123"
-    conn = psycopg2.connect(
-        host=db_host,
-        port=db_port,
-        dbname=db_name,
-        user=db_user,
-        password=db_password
-    )
+
     ```
