@@ -1,0 +1,406 @@
+{
+  "name": "RAG agent with Postgrel for me",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "=https://drive.google.com/drive/folders/1Z-ko3NgFHEMRDNbQTGnLf09SgR_0sPPw?usp=sharing",
+          "mode": "url"
+        },
+        "event": "fileCreated",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        -704,
+        -176
+      ],
+      "id": "aacc9e11-8248-430d-b68b-853648c49bb0",
+      "name": "Google Drive Trigger",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "A8fyiJA81mLsVj9p",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -240,
+        -176
+      ],
+      "id": "9848e15c-78b3-4317-bab0-19f5de9050b9",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "A8fyiJA81mLsVj9p",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": "n8n_vectors_me",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePGVector",
+      "typeVersion": 1.3,
+      "position": [
+        -32,
+        -176
+      ],
+      "id": "664fef53-7ebe-4552-ba52-328141a11be9",
+      "name": "Postgres PGVector Store",
+      "credentials": {
+        "postgres": {
+          "id": "ej54so4kqGYQFlR0",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-embedding-001"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        80
+      ],
+      "id": "1051caca-4aa9-4fea-84f4-81ac361d45be",
+      "name": "Embeddings Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ABzT8WekEiFrsBmb",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "textSplittingMode": "custom",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "document_title",
+                "value": "={{ $json.id }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        128,
+        96
+      ],
+      "id": "4dc5c755-50c0-46bb-bbed-6e739d7cb9dd",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        128,
+        304
+      ],
+      "id": "ae3178e8-c0af-49af-8ee8-b5f554127dd4",
+      "name": "Recursive Character Text Splitter"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -640,
+        464
+      ],
+      "id": "db72c262-7207-4b36-8261-745acb2d238b",
+      "name": "When chat message received",
+      "webhookId": "73e40cda-e8be-4ef9-8777-cc18080b142b"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are a highly specialized travel and local guide AI assistant for South Korea.\n\nYour primary function is to answer user queries by synthesizing information exclusively from the provided database context. The database contains comprehensive lists of famous **local restaurants** and **tourist attractions** for various cities and regions across South Korea.\n\n## Instructions\n1. Strict Context Adherence: You MUST use ONLY the information retrieved in the Search Results Context. Do not use external knowledge, guess, or fabricate any information.\n2.User Goal: The user will ask for travel recommendations, restaurants, or attractions for a specific city or region nam in South Korea.\n3. Output Format: For the requested city or region, you must provide a balanced and integrated recommendation.\n    * List the recommended Restaurants in a clean, bulleted list or table.\n    * List the recommended Attractions or Sights in a separate, clean bulleted list or table.\n    * If no information is found for a requested city in the context, clearly state I apologize, but I cannot find sufficient restaurant or attraction data for [City Name] in my current database."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        -368,
+        464
+      ],
+      "id": "c150e30f-0d34-40ea-a4d4-f687b1f39ea8",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-pro",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -512,
+        672
+      ],
+      "id": "dbbc5232-2527-487c-b8bc-ac2c28a29a73",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ABzT8WekEiFrsBmb",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "This tool specializes in searching for detailed information on travel and tourist attractions across major regions of South Korea.\n\nIt should be used when users inquire about places worth visiting, tourist spots, or recommended travel routes in a specific area, or when requesting information on popular restaurants alongside tourist attractions.\nSearch results include the names and features of notable attractions worth visiting, along with a list of famous restaurants in that region.\n\nTranslated with DeepL.com (free version)",
+        "tableName": "n8n_vectors_me",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePGVector",
+      "typeVersion": 1.3,
+      "position": [
+        80,
+        656
+      ],
+      "id": "bfdfad2c-1b77-497f-b6af-156b0eb8c776",
+      "name": "Postgres PGVector Store1",
+      "credentials": {
+        "postgres": {
+          "id": "ej54so4kqGYQFlR0",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-embedding-001"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -32,
+        928
+      ],
+      "id": "7219f404-468b-438e-b9ea-d9375754eee6",
+      "name": "Embeddings Google Gemini1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ABzT8WekEiFrsBmb",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        -368,
+        672
+      ],
+      "id": "74a1fe70-019b-4ca1-84fe-b4cb7db640ba",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "ej54so4kqGYQFlR0",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -496,
+        -160
+      ],
+      "id": "be7a13ad-91b3-47e9-bc15-b8283076d1f8",
+      "name": "Loop Over Items"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Drive Trigger": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Postgres PGVector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Postgres PGVector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Postgres PGVector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres PGVector Store1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Postgres PGVector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres PGVector Store": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ac3ebfa9-48ed-487a-9fea-b8baa7c2ac95",
+  "meta": {
+    "instanceId": "02aaf9684136d34895bf97d45178b21d7a90cadce99c6e83a62f6aaefe766bd9"
+  },
+  "id": "FEYxCly907wuH5gq",
+  "tags": []
+}
